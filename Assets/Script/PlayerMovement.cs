@@ -4,6 +4,8 @@ public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private float speed;
     [SerializeField] private bool toggleCrouch = true;
+    [SerializeField] private Animator animator;
+    [SerializeField] private PlayerMovement playerMovement;
     private Rigidbody2D body;
     private Animator anim;
     private bool grounded;
@@ -47,6 +49,8 @@ public class PlayerMovement : MonoBehaviour
         anim.SetBool("Walk", horizontalInput != 0 && !isCrouching);
         anim.SetBool("Grounded", grounded);
         anim.SetBool("Crouch", isCrouching);
+        bool isFalling = body.velocity.y < 0 && !grounded;
+        anim.SetBool("isFalling", isFalling);
     }
   
     private void Jump()
@@ -69,10 +73,14 @@ public class PlayerMovement : MonoBehaviour
             isCrouching = Input.GetKey(KeyCode.S) && grounded;
         }
     }
-
+    public bool IsGrounded()
+    {
+        return grounded;
+    }
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.tag == "Ground")
             grounded = true;
+
     }
 }
