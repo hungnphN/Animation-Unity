@@ -1,7 +1,18 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    [SerializeField] private GameObject dashWindPrefab;
+    [SerializeField] private Transform dashSpawnPoint;
+    [SerializeField] private float strikeDistance = 5f;
+    [SerializeField] private float strikeDuration = 0.3f;
+    [SerializeField] private LayerMask enemyLayer;
+    [SerializeField] private float iframeDuration = 0.3f;
+
+    private bool isStriking;
+    private float strikeTimer;
+    private bool hasIframe;
     [SerializeField] private float speed;
     [SerializeField] private bool toggleCrouch = true;
     [SerializeField] private Animator animator;
@@ -18,6 +29,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.LeftControl) && !isStriking && grounded && !isCrouching)
+        {
+            StartCoroutine(Strike());
+        }
         bool sPressed = Input.GetKey("s");  
         bool sKeyCode = Input.GetKey(KeyCode.S);
 
@@ -58,6 +73,34 @@ public class PlayerMovement : MonoBehaviour
         body.velocity = new Vector2(body.velocity.x, speed);
         anim.SetTrigger("jump");
         grounded = false;
+    }
+    private IEnumerator Strike()
+    {
+        isStriking = true;
+        anim.SetTrigger("Strike");
+        hasIframe = true;
+        GameObject vfx = Instantiate(dashWindPrefab, dashSpawnPoint.position, Quaternion.identity);
+        if(transform.localScale.x <0)
+        {
+            Vector3 scale = vfx.transform.localScale;
+            scale.x *= -1;
+            vfx.transform.localScale = scale;
+        }
+        Destroy(vfx, 0.5f);
+        float startTime = Time.time;
+        float direction = transform.localScale.x;
+
+        while (Time.time < startTime + strikeDuration)
+        {
+            body.velocity = new Vector2(direction * strikeDistance / strikeDuration, body.velocity.y);
+            yield return null;
+        }
+
+        body.velocity = Vector2.zero;
+        isStriking = false;
+
+        yield return new WaitForSeconds(iframeDuration);
+        hasIframe = false;
     }
     private void HandleCrouchInput()
     {
